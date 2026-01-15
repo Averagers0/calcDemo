@@ -25,12 +25,22 @@ import com.zzh.ecalculator.calculator.CalculationException
 @Preview
 fun App() {
     MaterialTheme {
-        CalculatorApp()
+        // 为桌面端添加响应式容器
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CalculatorApp(
+                modifier = Modifier
+                    .widthIn(max = 500.dp) // 设置最大宽度
+                    .fillMaxHeight()
+            )
+        }
     }
 }
 
 @Composable
-fun CalculatorApp() {
+fun CalculatorApp(modifier: Modifier = Modifier) {
     val calculator = remember { Calculator() }
     var expression by remember { mutableStateOf("") }
     var result by remember { mutableStateOf("0") }
@@ -76,7 +86,7 @@ fun CalculatorApp() {
     }
            
     Column(
-        modifier = Modifier
+        modifier = modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
     ) {
