@@ -2,6 +2,7 @@ package com.zzh.ecalculator.calculator
 
 import com.zzh.ecalculator.calculator.operators.AddOperator
 import com.zzh.ecalculator.calculator.operators.DivideOperator
+import com.zzh.ecalculator.calculator.operators.ModOperator
 import com.zzh.ecalculator.calculator.operators.MultiplyOperator
 import com.zzh.ecalculator.calculator.operators.SubtractOperator
 
@@ -39,6 +40,7 @@ object OperatorRegistry {
         register(SubtractOperator())
         register(MultiplyOperator())
         register(DivideOperator())
+        register(ModOperator())
     }
     
     /**

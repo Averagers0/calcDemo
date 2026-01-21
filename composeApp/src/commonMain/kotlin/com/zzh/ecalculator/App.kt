@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zzh.ecalculator.calculator.Calculator
 import com.zzh.ecalculator.calculator.CalculationException
+import com.zzh.ecalculator.calculator.CalculationRecord
 
 @Composable
 @Preview
@@ -84,366 +85,359 @@ fun CalculatorApp(modifier: Modifier = Modifier) {
             errorMessage = null
         }
     }
-           
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .fillMaxSize()
-    ) {
-        // 显示屏区域 - 占用更少空间
-        Card(
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // 主计算器界面
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                .background(MaterialTheme.colorScheme.surface)
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+            // 显示屏区域 - 优化后的设计
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.4f),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                )
             ) {
-                // 表达式显示
-                Text(
-                    text = if (expression.isEmpty()) "0" else expression,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 20.sp
-                    ),
-                    color = if (expression.isEmpty()) 
-                        MaterialTheme.colorScheme.outline 
-                    else 
-                        MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // 结果显示
-                Text(
-                    text = result,
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp
-                    ),
-                    color = if (errorMessage != null) 
-                        MaterialTheme.colorScheme.error 
-                    else 
-                        MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                // 错误信息
-                errorMessage?.let { error ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 表达式显示
                     Text(
-                        text = error,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
+                        text = if (expression.isEmpty()) "0" else expression,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 18.sp,
+                            lineHeight = 22.sp
+                        ),
+                        color = if (expression.isEmpty()) 
+                            MaterialTheme.colorScheme.outline 
+                        else 
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    // 结果显示
+                    Text(
+                        text = result,
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 40.sp
+                        ),
+                        color = if (errorMessage != null) 
+                            MaterialTheme.colorScheme.error 
+                        else 
+                            MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    // 错误信息
+                    errorMessage?.let { error ->
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            textAlign = TextAlign.End,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 按键区域 - 现在总是占用固定空间
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.6f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 第一行: 清除和功能按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = "AC",
+                        onClick = { clearAll() },
+                        modifier = Modifier.weight(2f),
+                        buttonType = ButtonType.FUNCTION
+                    )
+                    
+                    CalculatorButton(
+                        text = "DEL",
+                        onClick = { deleteLast() },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.FUNCTION
+                    )
+                    
+                    CalculatorButton(
+                        text = "÷",
+                        onClick = { addToExpression(" / ") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.OPERATOR
+                    )
+                }
+                
+                // 第二行: 数字和运算符
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = "7",
+                        onClick = { addToExpression("7") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "8",
+                        onClick = { addToExpression("8") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "9",
+                        onClick = { addToExpression("9") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "×",
+                        onClick = { addToExpression(" * ") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.OPERATOR
+                    )
+                }
+                
+                // 第三行: 数字和运算符
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = "4",
+                        onClick = { addToExpression("4") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "5",
+                        onClick = { addToExpression("5") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "6",
+                        onClick = { addToExpression("6") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "−",
+                        onClick = { addToExpression(" - ") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.OPERATOR
+                    )
+                }
+                
+                // 第四行: 数字和运算符
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = "1",
+                        onClick = { addToExpression("1") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "2",
+                        onClick = { addToExpression("2") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "3",
+                        onClick = { addToExpression("3") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = "+",
+                        onClick = { addToExpression(" + ") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.OPERATOR
+                    )
+                }
+                
+                // 第五行: 特殊功能行
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = "(",
+                        onClick = { addToExpression("(") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.FUNCTION
+                    )
+                    
+                    CalculatorButton(
+                        text = "0",
+                        onClick = { addToExpression("0") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.NUMBER
+                    )
+                    
+                    CalculatorButton(
+                        text = ")",
+                        onClick = { addToExpression(")") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.FUNCTION
+                    )
+                    
+                    CalculatorButton(
+                        text = "%",
+                        onClick = { addToExpression(" % ") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.OPERATOR
+                    )
+                }
+                
+                // 第六行: 底部功能行
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CalculatorButton(
+                        text = if (showHistory) "隐藏" else "历史",
+                        onClick = { showHistory = !showHistory },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.SECONDARY,
+                        fontSize = 14
+                    )
+                    
+                    CalculatorButton(
+                        text = ".",
+                        onClick = { addToExpression(".") },
+                        modifier = Modifier.weight(1f),
+                        buttonType = ButtonType.FUNCTION
+                    )
+                    
+                    CalculatorButton(
+                        text = "=",
+                        onClick = { performCalculation() },
+                        modifier = Modifier.weight(2f),
+                        buttonType = ButtonType.EQUALS
                     )
                 }
             }
         }
         
-        // 按键区域
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp)
-        ) {
-            // 第一行: AC, DEL, (, )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CalculatorButton(
-                    text = "AC",
-                    onClick = { clearAll() },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.errorContainer,
-                    textColor = MaterialTheme.colorScheme.onErrorContainer
-                )
-                
-                CalculatorButton(
-                    text = "DEL",
-                    onClick = { deleteLast() },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                    textColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                
-                CalculatorButton(
-                    text = "(",
-                    onClick = { addToExpression("(") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    textColor = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                
-                CalculatorButton(
-                    text = ")",
-                    onClick = { addToExpression(")") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    textColor = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-            }
-            
-            // 第二行: 7, 8, 9, /
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CalculatorButton(
-                    text = "7",
-                    onClick = { addToExpression("7") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "8",
-                    onClick = { addToExpression("8") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "9",
-                    onClick = { addToExpression("9") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "÷",
-                    onClick = { addToExpression(" / ") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            // 第三行: 4, 5, 6, *
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CalculatorButton(
-                    text = "4",
-                    onClick = { addToExpression("4") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "5",
-                    onClick = { addToExpression("5") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "6",
-                    onClick = { addToExpression("6") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "×",
-                    onClick = { addToExpression(" * ") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            // 第四行: 1, 2, 3, -
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CalculatorButton(
-                    text = "1",
-                    onClick = { addToExpression("1") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "2",
-                    onClick = { addToExpression("2") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "3",
-                    onClick = { addToExpression("3") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = "−",
-                    onClick = { addToExpression(" - ") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            // 第五行: 0, 历史, +, =
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CalculatorButton(
-                    text = "0",
-                    onClick = { addToExpression("0") },
-                    modifier = Modifier.weight(1f)
-                )
-                
-                CalculatorButton(
-                    text = if (showHistory) "隐藏" else "历史",
-                    onClick = { showHistory = !showHistory },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                    textColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontSize = 16
-                )
-                
-                CalculatorButton(
-                    text = "+",
-                    onClick = { addToExpression(" + ") },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                
-                CalculatorButton(
-                    text = "=",
-                    onClick = { performCalculation() },
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = MaterialTheme.colorScheme.primary,
-                    textColor = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-            
-            // 历史记录区域 (可选显示)
-            if (showHistory) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "计算历史",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            
-                            TextButton(
-                                onClick = { calculator.clearHistory() }
-                            ) {
-                                Text("清除历史")
-                            }
-                        }
-                        
-                        val history = calculator.getHistory()
-                        
-                        if (history.isEmpty()) {
-                            Text(
-                                "暂无历史记录",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.outline,
-                                modifier = Modifier.padding(16.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                items(history.reversed()) { record ->
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 2.dp)
-                                            .clickable { 
-                                                expression = record.expression
-                                                showHistory = false
-                                            },
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                        )
-                                    ) {
-                                        Column(modifier = Modifier.padding(8.dp)) {
-                                            Text(
-                                                text = record.expression,
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontFamily = FontFamily.Monospace
-                                                ),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            Text(
-                                                text = "= ${formatNumber(record.result)}",
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontFamily = FontFamily.Monospace,
-                                                    fontWeight = FontWeight.Bold
-                                                ),
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        // 全屏历史记录覆盖层
+        if (showHistory) {
+            HistoryOverlay(
+                calculator = calculator,
+                onSelectExpression = { expr ->
+                    expression = expr
+                    showHistory = false
+                },
+                onDismiss = { showHistory = false }
+            )
         }
     }
 }
 
-// 计算器按钮组件
+// 按钮类型枚举
+enum class ButtonType {
+    NUMBER,     // 数字按钮
+    OPERATOR,   // 运算符按钮  
+    FUNCTION,   // 功能按钮
+    SECONDARY,  // 次要功能按钮
+    EQUALS      // 等号按钮
+}
+
+// 优化后的计算器按钮组件
 @Composable
 fun CalculatorButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    textColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    buttonType: ButtonType = ButtonType.NUMBER,
     fontSize: Int = 20
 ) {
+    val (backgroundColor, textColor, elevation) = when (buttonType) {
+        ButtonType.NUMBER -> Triple(
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.onSurface,
+            4.dp
+        )
+        ButtonType.OPERATOR -> Triple(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.onPrimary,
+            6.dp
+        )
+        ButtonType.FUNCTION -> Triple(
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            4.dp
+        )
+        ButtonType.SECONDARY -> Triple(
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            2.dp
+        )
+        ButtonType.EQUALS -> Triple(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+            MaterialTheme.colorScheme.onPrimary,
+            8.dp
+        )
+    }
+    
     Card(
         modifier = modifier
-            .aspectRatio(1f)
+            .height(64.dp)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 8.dp
+            defaultElevation = elevation,
+            pressedElevation = elevation + 4.dp
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -452,10 +446,223 @@ fun CalculatorButton(
             Text(
                 text = text,
                 fontSize = fontSize.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = when (buttonType) {
+                    ButtonType.EQUALS -> FontWeight.Bold
+                    ButtonType.OPERATOR -> FontWeight.SemiBold
+                    else -> FontWeight.Medium
+                },
                 color = textColor,
                 textAlign = TextAlign.Center
             )
+        }
+    }
+}
+
+// 全屏历史记录覆盖层
+@Composable
+fun HistoryOverlay(
+    calculator: Calculator,
+    onSelectExpression: (String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 半透明背景
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable { onDismiss() }
+    ) {
+        // 历史记录卡片
+        Card(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+                .clickable { }, // 阻止点击事件传递到背景
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+            ) {
+                // 标题栏
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "计算历史",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 清除历史按钮
+                        OutlinedButton(
+                            onClick = { calculator.clearHistory() },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text(
+                                "清除全部",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        
+                        // 关闭按钮
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Text(
+                                "×",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // 历史记录列表
+                val history = calculator.getHistory()
+                
+                if (history.isEmpty()) {
+                    // 空状态
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                "📝",
+                                style = MaterialTheme.typography.displaySmall,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            Text(
+                                "暂无历史记录",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.outline,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                "开始计算后，历史记录会显示在这里",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
+                } else {
+                    // 历史记录列表
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        reverseLayout = true // 最新的记录在顶部
+                    ) {
+                        items(history) { record ->
+                            HistoryItem(
+                                record = record,
+                                onClick = { onSelectExpression(record.expression) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 历史记录条目组件
+@Composable
+fun HistoryItem(
+    record: CalculationRecord,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 表达式和结果
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = record.expression,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = FontFamily.Monospace
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = "= ${formatNumber(record.result)}",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                // 时间戳
+                Text(
+                    text = formatTimestamp(record.timestamp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+            
+            // 使用按钮
+            TextButton(
+                onClick = onClick,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    "使用",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
@@ -473,5 +680,18 @@ private fun formatNumber(number: Double): String {
         } else {
             str
         }
+    }
+}
+
+private fun formatTimestamp(timestamp: Long): String {
+    // 简单的时间格式化，显示相对时间
+    val now = com.zzh.ecalculator.platform.TimeProvider.currentTimeMillis()
+    val diff = now - timestamp
+    
+    return when {
+        diff < 60000 -> "刚刚"
+        diff < 3600000 -> "${diff / 60000}分钟前"
+        diff < 86400000 -> "${diff / 3600000}小时前"
+        else -> "${diff / 86400000}天前"
     }
 }
